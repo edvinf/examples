@@ -15,8 +15,9 @@ read_psv <- function(file, encoding="latin1", col_types=NULL){
   return(db)
 }
 
+#' Plot temporal partitioning of landings
 #' @param landings parsed and possibly filtered landings, assumes siste fangstdato formatted as Date.
-#' @param species vector of species to retain
+#' @param species vector of species to retain 'Art (bokmål)'
 #' @param main title for plot
 plot_landings_vs_time <- function(landings, species, main){
   filteredlandings <- landings[landings$`Art (bokmål)` %in% species,]
@@ -33,7 +34,10 @@ plot_all_species_vs_time <- function(landings){
   }
 }
 
-#'
+#' Plots weight partitioning of selected species or species group by gear
+#' @param landings parsed and possibly filtered landings
+#' @param species vector of species to retain, as they appear in 'Art (bokmål)'
+#' @param main title for plot
 plot_weight_by_gear_for_species <- function(landings, species, main){
   filteredlandings <- landings[landings$`Art (bokmål)` %in% species,]
   tab <- aggregate(list(weight=filteredlandings$Rundvekt), list(gear=filteredlandings$`Hovedgruppe redskap (bokmål)`), FUN=sum)
@@ -91,3 +95,9 @@ plot_landings_vs_time(longline, skates, "Longline, skates")
 
 #note it is the combination of vessel and date of last catch that best defines a landing (not the number of rows in landings, even after filtering by species)
 print(paste("Landings: ", nrow(unique(landings[,c("Registreringsmerke (seddel)", "Siste fangstdato")])), ", rows:", nrow(landings), sep = ""))
+
+# example for filtering by time time categories
+#
+# make dataset for jan-feb
+#
+janfeb <- landings[landings$`Siste fangstdato`>=as.Date("2016-01-01") & landings$`Siste fangstdato`<as.Date("2016-03-01"),]
