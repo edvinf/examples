@@ -1,12 +1,18 @@
 library(Rstox)
 
+# 
+# Example fetching time series data using Rstox.
+# Contains adaptations for making column names consistent with biotic definitions, as future StoX/Rstox releases are expected to standardize naming
+#
+
+
 #' Download data and organize it in stox projects
 #' @return list of stoc project locations
 fetch_survey_timeseries <- function(survey, model=modelBio){
   # specify some stox processes to run on all surveys (must be supported by compile_output)
   # specifying read biotic which reads the data and LengthDist, which combines length distribution taking account of when the catch of a species is sorted in categories before indivdiual parameters are sampled (delprøve)
   modelBio <- list("ReadBioticXML", StationLengthDist=list(LengthDistType="LengthDist", BioticData="ReadBioticXML"))
-  projects <- getNMDdata(cruise=survey, group="year", subset=c(2005,2006), model=modelBio, abbrev=TRUE, subdir=TRUE, ow=TRUE)  
+  projects <- getNMDdata(cruise=survey, group="year", subset=NULL, model=modelBio, abbrev=TRUE, subdir=TRUE, ow=TRUE)  
 }
 
 
@@ -15,8 +21,98 @@ fix_parameter_names_station <- function(stations){
   if (any(is.na(stations$startdata))){
     stop("Could not intriduce startyear based on startdates. Missing startdates.")
   }
+  # not consistent with 1.4 or 3
   stations$startyear <- substr(stations$startdate, 7, 10)
+  stations$stationtype <- stations$fishstationtype
+  stations$fishstationtype <- NULL
+  
+  #not consistent with 3
+  stations$serialnumber <- stations$serialno
+  stations$serialno <- NULL
+  stations$stationstartdate <- stations$startdate
+  stations$startdate <- NULL
+  stations$stationstarttime <- stations$starttime
+  stations$starttime <- NULL
+  stations$stationstopdate <- stations$stopdate
+  stations$stopdate <- NULL
+  stations$stationstoptime <- stations$stoptime
+  stations$stoptime <- NULL
+  stations$stationcomment <- stations$comment
+  stations$comment <- NULL
+  stations$samplequality <- stations$trawlquality
+  stations$trawlquality <- NULL
+  stations$verticaltrawlopening <- stations$trawlopening
+  stations$trawlopening <- NULL
+  stations$verticaltrawlopeningsd <- stations$trawlopeningsd
+  stations$trawlopeningsd <- NULL
+  stations$catchplatform <- stations$platform
+  stations$platform <- NULL
+  stations$gearflow <- stations$gearspeed
+  stations$gearspeed <- NULL
+  stations$bottomdepthmean <- stations$meanbottomdepth
+  stations$meanbottomdepth <- NULL
+  stations$fishingdepthtemperature <- stations$temperaturefishingdepth
+  stations$temperaturefishingdepth <- NULL
+  stations$trawldoorspread <- stations$doorspread 
+  stations$doorspread <- NULL
+  stations$trawldoorspreadsd <- stations$doorspreadsd
+  stations$doorspreadsd <- NULL
+  stations$vesselcount <- stations$countofvessels
+  stations$countofvessels <- NULL
+  stations$logstart <- stations$startlog
+  stations$startlog <- NULL
+  stations$logstop <- stations$stoplog
+  stations$stoplog <- NULL
+  
+  stations$flowconst <- NULL
+  stations$flowcount <- NULL
   return(stations)
+}
+
+fix_parameter_names_catches <- function(catches){
+  catches$commonname <- catches$noname
+  catches$noname <- NULL
+  catches$catchcategory <- catches$species
+  catches$species <- NULL
+  catches$catchproducttype <- catches$producttype
+  catches$producttype <- NULL
+  catches$catchweight <- catches$weight
+  catches$weight <- NULL
+  catches$catchvolume <- catches$volume
+  catches$volume <- NULL
+  catches$catchcount <- catches$count
+  catches$count <- NULL
+  catches$catchcomment <- catches$comment
+  catches$comment <- NULL
+  catches$catchpartnumber <- catches$samplenumber
+  catches$samplenumber <- NULL
+  return(catches)
+}
+
+fix_parameter_names_individuals <- function(individuals){
+  individuals$lengthresolution <- individuals$lengthunit
+  individuals$lengthunit <- NULL
+  individuals$maturationstage <- individuals$stage
+  individuals$stage <- NULL
+  individuals$tissuesample <- individuals$genetics
+  individuals$genetics <- NULL
+  individuals$tissuesamplenumber <- individuals$geneticsnumber
+  individuals$geneticsnumber <- NULL
+  individuals$individualproducttype <- individuals$producttype
+  individuals$producttype <- NULL
+  individuals$individualweight <- individuals$weight
+  individuals$weight <- NULL
+  individuals$individualvolume <- individuals$volume
+  individuals$volume <- NULL
+  individuals$individualcomment <- individuals$comment
+  individuals$comment <- NULL
+  individuals$vertebraecount <- individuals$vertebrae
+  individuals$vertebrae <- NULL
+  individuals$specimenid <- individuals$specimenno
+  individuals$specimenno <- NULL
+  
+  individuals$developmentalstage <- NULL
+  return(individuals)
 }
 
 #' Runs all given stox projects and stacks tabular output files
@@ -63,12 +159,25 @@ compile_output <- function(stoxprojects){
     }   
   }
   
-  out <- list()
+  raw_data <- list()
   stationdata <- fix_parameter_names_station(stationdata)
-  out$stationdata <- stationdata
-  out$catchdata <- catchdata
-  out$individualdata <- individualdata
-  out$lengthdistdata <- lengthdistdata
+  raw_data$stationdata <- stationdata
+  catchdata <- fix_parameter_names_catches(catchdata)
+  raw_data$catchdata <- catchdata
+  individualdata <- fix_parameter_names_individuals(individualdata)
+  raw_data$individualdata <- individualdata
+  
+  computed_data <- list()
+  computed_data$lengthdistdata <- lengthdistdata
+  
+  reference_data <- list()
+  reference_data$taxa <- getNMDinfo("taxa")
+  
+  out <- list()
+  
+  out$raw_data <- raw_data
+  out$computed_data <- computed_data
+  out$reference_data <- reference_data
   
   return(out)
 }
@@ -78,6 +187,12 @@ save_data <- function(data, survey, outpath){
   saveRDS(data, file.path(outpath, paste(survey, "rda", sep=".")))
 }
 
+get_surveyseries <- function(survey){
+  outpath <- "./output"
+  projects <- fetch_survey_timeseries(survey)
+  output <- compile_output(projects)
+  save_data(output, survey, outpath)
+}
 
 #
 # Commands for browsing db content (geting cruise and survey identifiers)
@@ -92,11 +207,13 @@ zero_g_cruises <- getNMDinfo(c("cs", "Barents Sea NOR-RUS 0-group cruise in autu
 #
 #extracts time_series for ecosystem survey and the preceeding 0-group survey
 #
-survey <- "Barents Sea NOR-RUS ecosystem cruise in autumn"
-outpath <- "./output"
-projects <- fetch_survey_timeseries(survey)
-output <- compile_output(projects)
-save_data(output, survey, outpath)
+get_surveyseries("Barents Sea NOR-RUS ecosystem cruise in autumn")
+get_surveyseries("Barents Sea NOR-RUS 0-group cruise in autumn")
+
+#
+#extracts time_series for winter survey
+#
+get_surveyseries("Barents Sea NOR-RUS demersal fish cruise in winter")
 
 #
 # read data back in with readRDS(path)
