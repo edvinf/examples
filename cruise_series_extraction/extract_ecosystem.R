@@ -1,5 +1,4 @@
 library(Rstox)
-
 # 
 # Example fetching time series data using Rstox.
 # Contains adaptations for making column names consistent with biotic definitions, as future StoX/Rstox releases are expected to standardize naming
@@ -157,6 +156,7 @@ compile_output <- function(stoxprojects){
     else{
       lengthdistdata <- rbind(lengthdistdata, ldist)
     }   
+    closeProject(p)
   }
   
   raw_data <- list()
