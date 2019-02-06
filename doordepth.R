@@ -5,9 +5,16 @@ doordepths_master <- telegrams[telegrams$sensortype=="DVTLAM" & telegrams$measur
 doordepths_master$time <- strptime(doordepths_master$timestamp.hhmmss.ss, format="%H%M%S")-strptime(doordepths_master$timestamp.hhmmss.ss, format="%H%M%S")[[1]]
 doordepths_master$measurementvalue <- doordepths_master$measurementvalue*(-1)
 
+doordepths_slave <- telegrams[telegrams$sensortype=="DVTLAS" & telegrams$measurementid=="D",]
+doordepths_slave$time <- strptime(doordepths_slave$timestamp.hhmmss.ss, format="%H%M%S")-strptime(doordepths_slave$timestamp.hhmmss.ss, format="%H%M%S")[[1]]
+doordepths_slave$measurementvalue <- doordepths_slave$measurementvalue*(-1)
+
+
 raw <- doordepths_master[doordepths_master$status.A.V=="A",]
 extr <- doordepths_master[doordepths_master$status.A.V=="V",]
 hq <- raw[raw$qualityfactor==15,]
+
+raw_slave <- doordepths_slave[doordepths_slave$status.A.V=="A",]
 
 #' smooths depth data by taking median over consecutive measurements to obtain the desired resolution
 #' @param timestamps timestampms in seconds
@@ -54,3 +61,18 @@ dd<-smooth(raw$time, raw$measurementvalue, resolution=20)
 lines(dd$time, dd$measurement, col="red")
 dd<-smooth(raw$time, raw$measurementvalue, resolution=30)
 lines(dd$time, dd$measurement, col="black")
+
+
+
+# difference between doors might define sensible depth resolution target
+
+plot(raw$time, raw$measurementvalue, col="grey", xlab="time (s)", ylab="-depth (m)", main="raw master vs slave", type="l")
+lines(raw_slave$time, raw_slave$measurementvalue, col="black")
+
+res=30
+dd<-smooth(raw$time, raw$measurementvalue, resolution=res)
+dd_slave<-smooth(raw_slave$time, raw_slave$measurementvalue, resolution=res)
+
+plot(c(as.numeric(dd$time), as.numeric(dd_slave$time)), c(dd$measurement, dd_slave$measurement), xlab="time (s)", ylab="-depth (m)", main=paste("smothed (",res," s) master vs slave", sep=""), type="n")
+lines(dd$time, dd$measurement, col="grey")
+lines(dd_slave$time, dd_slave$measurement, col="black")
