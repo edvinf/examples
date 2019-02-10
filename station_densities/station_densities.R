@@ -49,7 +49,7 @@ plot_station_bubblemap <- function(densities, longitudes, latitudes, bathymetry=
   }
   bubbles <- ggplot(bathymetry, aes(x=x, y=y))+
     geom_contour(aes(z=z), breaks=contours,colour="lightblue", size=0.5,show.legend = TRUE)+ 
-    geom_contour(aes(z=z), breaks=c(0,1),color="darkgrey", size=.6) + #for coastline only as line, activate this and skip geom_polygon
+    geom_contour(aes(z=z), breaks=c(0,1),color="darkgrey", size=.6) +
     geom_point(data=data.frame(longitudes=longitudes, latitudes=latitudes, densities=densities), aes(longitudes,latitudes,size = densities),shape=21, alpha = 0.3, colour = "black",fill="orange",stroke = .2)
   if (path){
     bubbles <- bubbles + geom_path(data=data.frame(longitudes=longitudes, latitudes=latitudes, densities=densities),aes(longitudes,latitudes), linejoin="round",lineend="square",alpha=0.4,colour="black",size=0.4)
@@ -67,6 +67,17 @@ plot_station_bubblemap <- function(densities, longitudes, latitudes, bathymetry=
 plot_station_bubblemap(haddockcatches$catchrate, haddockcatches$longitudestart, haddockcatches$latitudestart)
 
 
+#
+# playing with bath vis
+#
+bath_plot <- function(){
+
+  ggplot()+ 
+    geom_raster(aes(fill=bath$z[bath$z<0 & bath$z>-500], x=bath$x[bath$z<0 & bath$z>-500], y=bath$y[bath$z<0 & bath$z>-500])) + 
+    labs(x = NULL, y = NULL, fill="- depth")+
+    geom_contour(aes(x=bath$x, y=bath$y, z=bath$z), data=bath, breaks=seq(0,-500, -100), colour="grey", size=0.1) + 
+    theme_bw()  
+}
 
   
   
