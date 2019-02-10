@@ -19,6 +19,7 @@ stationscatches <- merge(totalcatches, stations2018[,c("serialnumber", "longitud
 stationscatches$catchrate <- stationscatches$totalcatch/stationscatches$distance
 
 haddockcatches <- stationscatches[stationscatches$taxa=="164744",]
+sebastesmantellacatches <-stationscatches[stationscatches$taxa=="166756",]
 
 ### Get bathymetry data
 bath1<-read_csv("~/bathymetry/bath_files_from_Harald_G/GeoData/ETOPO1_nm2.csv")
@@ -27,19 +28,16 @@ bath1<-read_csv("~/bathymetry/bath_files_from_Harald_G/GeoData/ETOPO1_nm2.csv")
 # Plot title 
 Sp <- c("Torsk")
 Yr <- c(2019)
-Title=ifelse(Title.on==1,paste("Vintertokt","|",toString(Yr),"|"," Fangstrate (kg/nmi)","|",toString(Sp)),"")
+Title=ifelse(Title.on==1,paste("Vintertokt","|",toString(Yr),"|"," Fangstrate (kg/nm)","|",toString(Sp)),"")
 
 ### Map area etc
 
-Ylim<-c(70,77 )        #latitude
-Xlim<-c(10, 40)         #longitude
 d.contours<-c(-100, -300,-500)   #Depth contours for plot with bathymetry
-Title.on<-1            #1 for showing chart title, 0 for not showing it
 Bubble.size<-20        #Max size of bubbles in bubble plots
 ### Slim down the bathimetry xyz file. Makes the graph part run faster
 bath<-subset(bath1, bath1$y>(Ylim[1]-2) & (bath1$y<Ylim[2]+2) & bath1$ x>(Xlim[1]-2)& bath1$x<(Xlim[2]+2) & bath1$z<=(d.contours[1]+1500) & bath1$z>=(d.contours[length(d.contours)]-1500))
 
-#' Plots a map with spheres proportional to densities at given locations
+#' Plots a map with spheres proportional to densities at planarized lon-lat locations
 #' @param densities vector of densities
 #' @param longitudes vector of longitudes corresponding to the densities
 #' @param latitidues vector of latitudes corresponding to the densities
@@ -48,25 +46,31 @@ bath<-subset(bath1, bath1$y>(Ylim[1]-2) & (bath1$y<Ylim[2]+2) & bath1$ x>(Xlim[1
 #' @param density_label explanatory text for densities used in legend
 #' @param title title for plot
 #' @param bubblesize maximal size for bubbles (max_size in scale_size{ggplot2})
-#' @param xlim limits for x-axis, if NULL range of x values in bathymetry will be used, ignoring NAs
-#' @param ylim limits for y-axis, if NULL tange of y values in bathymetry will be used, ingnoring NAs
-plot_station_bubblemap <- function(densities, longitudes, latitudes, bathymetry=bath, contours=d.contours, density_label="Fangstrater", title="", bubblesize=Bubble.size, xlim=Xlim, ylim=Ylim){
+#' @param xlim vector with limits for x-axis, if NULL range of x values in bathymetry will be used, ignoring NAs
+#' @param ylim vector with limits for y-axis, if NULL tange of y values in bathymetry will be used, ingnoring NAs
+#' @param path logical if T a path is drawn on the map between points in the order they appear in the vectors longitudes an latitudes
+plot_station_bubblemap <- function(densities, longitudes, latitudes, bathymetry=bath, contours=d.contours, density_label="density", title="", bubblesize=Bubble.size, xlim=NULL, ylim=NULL, path=F){
   if (is.null(ylim)){
     ylim=c(min(bathymetry$y, na.rm=T), max(bathymetry$y, na.rm=T))
   }
   if (is.null(xlim)){
     xlim=c(min(bathymetry$x, na.rm=T), max(bathymetry$x, na.rm=T))
   }
-  ggplot(bathymetry, aes(x=x, y=y))+
+  bubbles <- ggplot(bathymetry, aes(x=x, y=y))+
     geom_contour(aes(z=z), breaks=contours,colour="lightblue", size=0.5,show.legend = TRUE)+ 
     geom_contour(aes(z=z), breaks=c(0,1),color="darkgrey", size=.6) + #for coastline only as line, activate this and skip geom_polygon
-    geom_point(data=data.frame(longitudes=longitudes, latitudes=latitudes, densities=densities), aes(longitudes,latitudes,size = densities),shape=21, alpha = 0.3, colour = "black",fill="orange",stroke = .2)+
-    #geom_path(data=data.frame(longitudes=longitudes, latitudes=latitudes, densities=densities),aes(longitudes,latitudes), linejoin="round",lineend="square",alpha=0.4,colour="black",size=0.4)+
+    geom_point(data=data.frame(longitudes=longitudes, latitudes=latitudes, densities=densities), aes(longitudes,latitudes,size = densities),shape=21, alpha = 0.3, colour = "black",fill="orange",stroke = .2)
+  if (path){
+    bubbles <- bubbles + geom_path(data=data.frame(longitudes=longitudes, latitudes=latitudes, densities=densities),aes(longitudes,latitudes), linejoin="round",lineend="square",alpha=0.4,colour="black",size=0.4)
+  }
+  bubbles <- bubbles +  
     scale_size_area(max_size=Bubble.size)+
-    theme_bw()+
     coord_cartesian(xlim = xlim,ylim = ylim)+
-    labs(x = NULL, y = NULL, size = density_label, title=title) 
-
+    labs(x = NULL, y = NULL, size = density_label, title=title)+
+    theme_bw()
+  bubbles <- bubbles +
+    geom_point(data=data.frame(longitudes=longitudes, latitudes=latitudes, densities=densities), aes(longitudes,latitudes, size=.1), shape=1, alpha = 1)
+  bubbles
 }
 
 plot_station_bubblemap(haddockcatches$catchrate, haddockcatches$longitudestart, haddockcatches$latitudestart)
