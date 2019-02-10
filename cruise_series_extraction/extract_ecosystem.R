@@ -7,11 +7,11 @@ library(Rstox)
 
 #' Download data and organize it in stox projects
 #' @return list of stoc project locations
-fetch_survey_timeseries <- function(survey, model=modelBio){
+fetch_survey_timeseries <- function(survey, model=modelBio, ow=T){
   # specify some stox processes to run on all surveys (must be supported by compile_output)
   # specifying read biotic which reads the data and LengthDist, which combines length distribution taking account of when the catch of a species is sorted in categories before indivdiual parameters are sampled (delprøve)
   modelBio <- list("ReadBioticXML", StationLengthDist=list(LengthDistType="LengthDist", BioticData="ReadBioticXML"))
-  projects <- getNMDdata(cruise=survey, group="year", subset=NULL, model=modelBio, abbrev=TRUE, subdir=TRUE, ow=TRUE)  
+  projects <- getNMDdata(cruise=survey, group="year", subset=NULL, model=modelBio, abbrev=TRUE, subdir=TRUE, ow=ow)  
 }
 
 
@@ -69,6 +69,8 @@ fix_parameter_names_station <- function(stations){
 }
 
 fix_parameter_names_catches <- function(catches){
+  catches$serialnumber <- catches$serialno
+  catches$serialno <- NULL
   catches$commonname <- catches$noname
   catches$noname <- NULL
   catches$catchcategory <- catches$species
