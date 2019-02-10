@@ -1,7 +1,3 @@
-#
-# Adapted from Harald Gjøsæter
-#
-
 library(plyr)
 library(dplyr)
 library(ggplot2)
@@ -24,12 +20,6 @@ sebastesmantellacatches <-stationscatches[stationscatches$taxa=="166756",]
 ### Get bathymetry data
 bath1<-read_csv("~/bathymetry/bath_files_from_Harald_G/GeoData/ETOPO1_nm2.csv")
 
-
-# Plot title 
-Sp <- c("Torsk")
-Yr <- c(2019)
-Title=ifelse(Title.on==1,paste("Vintertokt","|",toString(Yr),"|"," Fangstrate (kg/nm)","|",toString(Sp)),"")
-
 ### Map area etc
 
 d.contours<-c(-100, -300,-500)   #Depth contours for plot with bathymetry
@@ -37,6 +27,7 @@ Bubble.size<-20        #Max size of bubbles in bubble plots
 ### Slim down the bathimetry xyz file. Makes the graph part run faster
 bath<-subset(bath1, bath1$y>(Ylim[1]-2) & (bath1$y<Ylim[2]+2) & bath1$ x>(Xlim[1]-2)& bath1$x<(Xlim[2]+2) & bath1$z<=(d.contours[1]+1500) & bath1$z>=(d.contours[length(d.contours)]-1500))
 
+#' Adapted from Harald Gjøsæter
 #' Plots a map with spheres proportional to densities at planarized lon-lat locations
 #' @param densities vector of densities
 #' @param longitudes vector of longitudes corresponding to the densities
