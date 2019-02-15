@@ -87,16 +87,19 @@ fix_parameter_names_catches <- function(catches){
   catches$comment <- NULL
   catches$catchpartnumber <- catches$samplenumber
   catches$samplenumber <- NULL
+  catches$tissuesample <- catches$genetics
+  catches$genetics <- NULL
+  
   return(catches)
 }
 
 fix_parameter_names_individuals <- function(individuals){
+  individuals$serialnumber <- individuals$serialno
+  individuals$serialno <- NULL
   individuals$lengthresolution <- individuals$lengthunit
   individuals$lengthunit <- NULL
   individuals$maturationstage <- individuals$stage
   individuals$stage <- NULL
-  individuals$tissuesample <- individuals$genetics
-  individuals$genetics <- NULL
   individuals$tissuesamplenumber <- individuals$geneticsnumber
   individuals$geneticsnumber <- NULL
   individuals$individualproducttype <- individuals$producttype
