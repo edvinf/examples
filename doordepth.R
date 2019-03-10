@@ -1,5 +1,5 @@
 
-sm2telegramsfile <- "data/BT12_SM2.csv"
+sm2telegramsfile <- "data/BT168_SM2.csv"
 telegrams <- read.csv(sm2telegramsfile, stringsAsFactors = F, strip.white = T, colClasses=c("character", NA, NA, NA, NA, NA, NA, NA))
 doordepths_master <- telegrams[telegrams$sensortype=="DVTLAM" & telegrams$measurementid=="D",]
 doordepths_master$time <- strptime(doordepths_master$timestamp.hhmmss.ss, format="%H%M%S")-strptime(doordepths_master$timestamp.hhmmss.ss, format="%H%M%S")[[1]]
