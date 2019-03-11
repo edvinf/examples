@@ -2,7 +2,9 @@
 title: "Eksempel dørdyp vs ekkodyp"
 author: "Edvin Fuglebakk"
 date: "3/8/2019"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -64,26 +66,32 @@ Stasjon fra vintertoktet 2019, SS 354, BT 168, serienr: 70168. Toktlogger kjørt
 * Fiskedybde maks (tråldør): 263.63 m
 * Fiskedybde min (tråldør): 201.44 m
 
-Tråling var gjort på relativ grunn og flat bunn, og fra inspeksjon av ekkograp vurderte vi det dit hen at den store forskjellen på min og maks dyp målt på tråldører antagelig ikke er riktig.
+Tråling var gjort på relativ grunn og flat bunn, og fra inspeksjon av ekkogram vurderte vi det dit hen at den store forskjellen på min og maks dyp målt på tråldører antagelig ikke er riktig.
 
 For å inspisere støy i signalet plotter jeg under alle dybdemålinger, og kun dybdemålinger markert med høyeste kvalitetsmerke i scanmar-telegrammene:
-```{r telegrammer fra dørsensor, echo=FALSE}
+
+```{r telegrammer fra dorsensor, echo=FALSE}
 plot(raw$time, raw$measurementvalue, col="grey", xlab="time (s)", ylab="-depth (m)", main="raw vs quality=15", type="l")
 lines(hq$time, hq$measurementvalue, col="green")
 legend("topright", c("raw", "q=15"), fill=c("grey", "green"), bty = "n")
 
 ```
+
 Basert på dette ser det ut til at toktlogger beregner maks og min fra kvalitetsfiltrerte telegrammer, men muligens med mindre streng kvalitetsfiltrering. Samtidig ser vi at også telegrammene markert med høyeste kvalitet har mistenkelig høy dybdeforskjell på kort tid. En sammenligning mellom dørene (master og slave) støtter oppunder at hoppet mellom 350 og 400 s ikke reflekterer en reell endring i fiskedyp:
-```{r sammenligning dørsensorer, echo=FALSE}
+
+```{r sammenligning dorsensorer, echo=FALSE}
 plot(raw$time, raw$measurementvalue, col="grey", xlab="time (s)", ylab="-depth (m)", main="raw master vs slave", type="l")
 lines(raw_slave$time, raw_slave$measurementvalue, col="black")
 legend("topright", c("master", "slave"), fill=c("grey", "black"), bty = "n")
 ```
+
 Jeg har forsøkvis forsøkt å glatte signalet ved å ta median over etterfølgende telegrammer i bestemte tidsvindu. I utgangspunktet har vi på dette dypet en oppløsning på:
 ```{r, echo=FALSE}
 print(paste("Original oppløsing:", round((max(raw$time)-min(raw$time))/length(raw$time)), "s eller", round(spatial_resolution(3.0, (max(raw$time)-min(raw$time))/length(raw$time))), "m @ 3.0 kt SOG."))
 ```
+
 Ved glatting til 10 s, 20 s og 30 s, får jeg:
+
 ```{r, echo=F}
 plot(raw$time, raw$measurementvalue, col="grey", xlab="time (s)", ylab="-depth (m)", main="raw vs smoothed (10s, 20s, 30s)\n(15m, 31m, 46m @ 3.0 kt)", type="l")
 dd<-smooth(raw$time, raw$measurementvalue, resolution=10)
@@ -94,6 +102,7 @@ dd<-smooth(raw$time, raw$measurementvalue, resolution=30)
 lines(dd$time, dd$measurement, col="black")
 legend("topright", c("raw", "10s", "20s", "30s"), fill=c("grey", "blue", "red", "black"), bty = "n")
 ```
+
 Min og maks fiskedyp for glatting med 30s oppløsning er:
 ```{r, echo=F}
 print(paste("Fiskedyp min (m):", -round(max(dd$measurement))))
