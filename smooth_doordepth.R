@@ -71,3 +71,6 @@ for (t in telegramfiles){
     d <- rbind(d, as.data.frame(plot_and_smooth_doordepth(t)))
   }
 }
+
+# få dyp for pelagisk hal. Fikk ikke logget fra tråløye.
+plot_and_smooth_doordepth("data/PT160_SM2.csv")
