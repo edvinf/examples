@@ -20,7 +20,7 @@ lottery <- function(catch, TAC, N){
 #' @param n Number of replications to simulate
 #' @param m Number of catches to include in each replication
 #' @param e The expected number of samples for each iterations
-#' @param pilotcatches examples of catch sizes, taken from the pilot of the herring lottery.
+#' @param pilotcatches examples of catch sizes, taken from the sampled catches in the pilot of the herring lottery.
 example_sample_size <- function(n=100, m=1300, e=100, pilotcatches=c(24787.540, 12615.910, 11742.600, 8070.482, 8546.132, 27359.780, 10820.170, 4248.258, 8990.219, 14348.410, 16069.010, 22571.670, 23560.060, 55208.830)){
   
   actual_selections <- c()
