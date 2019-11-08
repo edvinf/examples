@@ -7,8 +7,9 @@
 #' @param N the expected number of samples for the duration of the sampling program
 #' @return logical() TRUE if catch is to be included in sample, otherwise FALSE
 lottery <- function(catch, TAC, N){
-  prob <- N*(catch/TAC)
-  return(c(TRUE, FALSE)[sample.int(2, 1, prob = c(prob, 1-prob))])
+  selection.ratio <- min(1,N*catch/TAC)
+  incl.prob <- selection.ratio
+  return(c(TRUE, FALSE)[sample.int(2, 1, prob = c(incl.prob, 1-incl.prob))])
 }
 
 #' Simulate sampling
@@ -26,7 +27,7 @@ example_sample_size <- function(n=100, m=1300, e=100, pilotcatches=c(24787.540, 
   actual_selections <- c()
   
   for (i in 1:n){
-    sim_catches <- pilotcatches[sample.int(length(pilotcatches), size=1300, replace = T)]
+    sim_catches <- pilotcatches[sample.int(length(pilotcatches), size=m, replace = T)]
     selection <- sapply(sim_catches, FUN = lottery, sum(sim_catches), e)
     actual_selections <- c(actual_selections, sum(selection))
   }
@@ -37,22 +38,33 @@ example_sample_size <- function(n=100, m=1300, e=100, pilotcatches=c(24787.540, 
 }
 
 samples_sizes <- example_sample_size(n=100, m=1200)
-min(samples_sizes)
-max(samples_sizes)
+print(min(samples_sizes))
+print(max(samples_sizes))
+print(mean(samples_sizes))
 hist(samples_sizes, main=paste("n:100, m:1200"))
 
 samples_sizes <- example_sample_size(n=100, m=2000)
-min(samples_sizes)
-max(samples_sizes)
+print(min(samples_sizes))
+print(max(samples_sizes))
+print(mean(samples_sizes))
 hist(samples_sizes, main=paste("n:100, m:2000"))
 
 samples_sizes <- example_sample_size(n=50, m=1200)
-min(samples_sizes)
-max(samples_sizes)
+print(min(samples_sizes))
+print(max(samples_sizes))
+print(mean(samples_sizes))
 hist(samples_sizes, main=paste("n:50, m:1200"))
 
 
 samples_sizes <- example_sample_size(n=50, m=2000)
-min(samples_sizes)
-max(samples_sizes)
+print(min(samples_sizes))
+print(max(samples_sizes))
+print(mean(samples_sizes))
 hist(samples_sizes, main=paste("n:50, m:2000"))
+
+samples_sizes <- example_sample_size(n=2000, m=2000)
+print(min(samples_sizes))
+print(max(samples_sizes))
+print(mean(samples_sizes))
+hist(samples_sizes, main=paste("n:50, m:2000"))
+
