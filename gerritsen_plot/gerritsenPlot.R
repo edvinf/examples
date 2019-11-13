@@ -14,24 +14,25 @@ makeColorMap <- function(columns, color){
 #' @noRd
 panelPlot  <- function(plotdata, xVariable, yVariable, yVariableUpper, yVariableLower, xlimrow, ylimcol, ylabel, basetheme, showX=F, showY=F, title=NULL, pointcol="white", linecol="black", errorcol="black", tickmarks=NULL){
   
-  panelplot <- ggplot(plotdata, aes_string(x=xVariable, y=yVariable))  + ylim(ylimcol) + xlim(xlimrow) + ylab(ylabel)
-  
+  panelplot <- ggplot(plotdata, aes_string(x=xVariable, y=yVariable)) + xlim(xlimrow) + ylab(ylabel) + ylim(ylimcol)
+
+  #error bars
   if (!is.null(yVariableUpper) & !is.null(yVariableLower)){
     panelplot <- panelplot + geom_linerange(aes_string(ymin=yVariableLower, ymax=yVariableUpper), color=errorcol)
   }
   
+  #points and lines
   if (nrow(plotdata) == 0){
-    panelplot <- panelplot + geom_blank()  
+    panelplot <- panelplot + geom_blank()
   }
   else{
     panelplot <- panelplot + geom_line(color=linecol) + geom_point(shape=20, size=2, color=pointcol)
   }
   
-  
   panelplot <- panelplot + basetheme()
   panelplot <- panelplot + theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank())
   if (!is.null(tickmarks)){
-    panelplot <- panelplot + scale_y_continuous(breaks=tickmarks)
+    panelplot <- panelplot + scale_y_continuous(breaks=tickmarks, limits = ylimcol)
   }
   if (!showX){
     panelplot <- panelplot + theme(axis.title.x = element_blank(), axis.text.x=element_blank())
@@ -42,7 +43,7 @@ panelPlot  <- function(plotdata, xVariable, yVariable, yVariableUpper, yVariable
   if (!is.null(title)){
     panelplot <- panelplot + ggtitle(title)
   }
-
+  
   return(panelplot)
 }
 
