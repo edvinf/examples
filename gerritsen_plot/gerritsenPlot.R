@@ -5,15 +5,34 @@ library(egg)
 library(stringr)
 
 #' @noRd
-panelPlot  <- function(plotdata, columnGroups, rowGroups, xVariable, yVariable, yVariableUpper, yVariableLower, xlimrow, ylimcol, ylabel, basetheme, showX=F, showY=F, title=NULL){
+makeColorMap <- function(columns, color){
+  colors <- as.list(rep(color, length(columns)))
+  names(colors) <- columns
+  return(colors)
+}
+
+#' @noRd
+panelPlot  <- function(plotdata, xVariable, yVariable, yVariableUpper, yVariableLower, xlimrow, ylimcol, ylabel, basetheme, showX=F, showY=F, title=NULL, pointcol="white", linecol="black", errorcol="black", tickmarks=NULL){
   
-  panelplot <- ggplot(plotdata, aes_string(x=xVariable, y=yVariable)) + geom_line() + geom_point(shape=21, size=3, fill="white") + ylim(ylimcol) + xlim(xlimrow) + ylab(ylabel)
+  panelplot <- ggplot(plotdata, aes_string(x=xVariable, y=yVariable))  + ylim(ylimcol) + xlim(xlimrow) + ylab(ylabel)
   
   if (!is.null(yVariableUpper) & !is.null(yVariableLower)){
-    panelplot <- panelplot +  geom_errorbar(width=.1, aes_string(ymin=yVariableLower, ymax=yVariableUpper))
+    panelplot <- panelplot + geom_linerange(aes_string(ymin=yVariableLower, ymax=yVariableUpper), color=errorcol)
   }
+  
+  if (nrow(plotdata) == 0){
+    panelplot <- panelplot + geom_blank()  
+  }
+  else{
+    panelplot <- panelplot + geom_line(color=linecol) + geom_point(shape=20, size=2, color=pointcol)
+  }
+  
+  
   panelplot <- panelplot + basetheme()
   panelplot <- panelplot + theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank())
+  if (!is.null(tickmarks)){
+    panelplot <- panelplot + scale_y_continuous(breaks=tickmarks)
+  }
   if (!showX){
     panelplot <- panelplot + theme(axis.title.x = element_blank(), axis.text.x=element_blank())
   }
@@ -43,8 +62,12 @@ panelPlot  <- function(plotdata, columnGroups, rowGroups, xVariable, yVariable, 
 #' @param ymin numeric(), optional, lower bounds of y axis, if not NULL y axis will be adopted to data for each column
 #' @param ymax numeric(), optional, upper bounds of y axis, if not provided y axis will be adopted to data for each column
 #' @param xlim vector, optional, lower and upper bounds of x axis, if not provided y axis will be adapted to data for each row
+#' @param pointcol character() or named list mapping the values in data[,columnGroups] to colors, color of points in plots
+#' @param linecol character() or named list mapping the values in data[,columnGroups] to colors color of connecting lines in plots
+#' @param errorcol character() or named list mapping the values in data[,columnGroups] to colors color of error bars
+#' @param tickmarks numeric() specifies tickmarks for y-axis
 #' @param basetheme ggplot2 - theme function to use for plotting. Default adjusts y-axis label alignments to account for variable width of tick-labels.
-stackedPanels <- function(data, columnGroups, rowGroups, xVariable, yVariable, yVariableLower=NULL, yVariableUpper=NULL, ylab=NULL, xlim=NULL, ymin=0, ymax=NULL, basetheme=function(x){ggplot2::theme_bw() + theme(plot.title = element_text(hjust = 0.5), axis.text.y = element_text(angle = 90, hjust = 1))}){
+stackedPanels <- function(data, columnGroups, rowGroups, xVariable, yVariable, yVariableLower=NULL, yVariableUpper=NULL, ylab=NULL, xlim=NULL, ymin=0, ymax=NULL, pointcol="black", linecol="#cb181d", errorcol="#cb181d", tickmarks=NULL, basetheme=function(x){ggplot2::theme_classic() + theme(plot.title = element_text(hjust = 0.5), axis.text.y = element_text(angle = 90, hjust = 1))}){
   
   if (!all(c(columnGroups, rowGroups, xVariable, yVariable) %in% names(data))){
     stop("Some arguments (columnGroups, rowGroups, xVariable, yVariable) not found in data.")
@@ -64,6 +87,16 @@ stackedPanels <- function(data, columnGroups, rowGroups, xVariable, yVariable, y
   
   rows <- sort(unique(unlist(data[,rowGroups])))
   cols <- sort(unique(unlist(data[,columnGroups])))
+  
+  if (is.character(linecol)){
+    linecol <- makeColorMap(cols, linecol)
+  }
+  if (is.character(pointcol)){
+    pointcol <- makeColorMap(cols, pointcol)
+  }
+  if (is.character(errorcol)){
+    errorcol <- makeColorMap(cols, errorcol)
+  }
   
   panels <- list()
   for (row in rows){
@@ -87,7 +120,6 @@ stackedPanels <- function(data, columnGroups, rowGroups, xVariable, yVariable, y
     if (is.null(maxy)){
       maxy <- max(data[data[,rowGroups] == row,maxvar])
       maxy <- maxy + abs(maxy) * .1
-      
     }
     ylimcol <- c(miny, maxy)
     
@@ -103,7 +135,7 @@ stackedPanels <- function(data, columnGroups, rowGroups, xVariable, yVariable, y
       }
       
       plotdata <- data[data[,columnGroups] == col & data[,rowGroups] == row,]
-      panel <- panelPlot(plotdata, columnGroups, rowGroups, xVariable, yVariable, yVariableUpper, yVariableLower, xlimrow, ylimcol, showX=(row == rows[length(rows)]), showY=(col == cols[1]), ylabel=row, basetheme=basetheme, title=title)
+      panel <- panelPlot(plotdata, xVariable, yVariable, yVariableUpper, yVariableLower, xlimrow, ylimcol, showX=(row == rows[length(rows)]), showY=(col == cols[1]), ylabel=row, basetheme=basetheme, title=title, pointcol=pointcol[[col]], linecol=linecol[[col]], errorcol=errorcol[[col]], tickmarks=tickmarks)
       panels[[paste(row, col, sep="/")]] <- panel
       
     }
@@ -114,14 +146,14 @@ stackedPanels <- function(data, columnGroups, rowGroups, xVariable, yVariable, y
     nrow=length(rows),
     left=ylab
     )
-    
 }
 
-#d <- read.csv("data/Catch-rates-countries.csv", sep=";")
-#stackedPanels(d, "Quarter", "Country", "Year", "Catch_rate", ylab = "Catch rate")
+d <- read.csv("data/Catch-rates-countries.csv", sep=";")
 
 #fake some error bars for testing plot
 d$upper <- d$Catch_rate + runif(nrow(d))*d$Catch_rate
 d$lower <- d$Catch_rate - runif(nrow(d))*d$Catch_rate
 
+# try with set tickmarks
 stackedPanels(d, "Quarter", "Country", "Year", "Catch_rate", "lower", "upper", ylab = "Catch rate")
+
