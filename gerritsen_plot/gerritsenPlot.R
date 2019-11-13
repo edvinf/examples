@@ -5,12 +5,12 @@ library(egg)
 library(stringr)
 
 #' @noRd
-panelPlot  <- function(plotdata, columnGroups, rowGroups, xVariable, yVariable, yVariableUpper, yVaraiableLower, xlimrow, ylimcol, ylabel, basetheme, showX=F, showY=F, title=NULL){
+panelPlot  <- function(plotdata, columnGroups, rowGroups, xVariable, yVariable, yVariableUpper, yVariableLower, xlimrow, ylimcol, ylabel, basetheme, showX=F, showY=F, title=NULL){
   
   panelplot <- ggplot(plotdata, aes_string(x=xVariable, y=yVariable)) + geom_line() + geom_point(shape=21, size=3, fill="white") + ylim(ylimcol) + xlim(xlimrow) + ylab(ylabel)
   
-  if (!is.null(yVariableUpper) & !is.null(yVaraiableLower)){
-    panelplot <- panelplot +  geom_errorbar(width=.1, aes_string(ymin=yVaraiableLower, ymax=yVariableUpper))
+  if (!is.null(yVariableUpper) & !is.null(yVariableLower)){
+    panelplot <- panelplot +  geom_errorbar(width=.1, aes_string(ymin=yVariableLower, ymax=yVariableUpper))
   }
   panelplot <- panelplot + basetheme()
   panelplot <- panelplot + theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank())
@@ -37,14 +37,14 @@ panelPlot  <- function(plotdata, columnGroups, rowGroups, xVariable, yVariable, 
 #' @param rowGRoups character() identifies column in data that identifies the grouping used for rows in the plot
 #' @param xVariable character() identifies column in data containting variable to be used for x-axis
 #' @param yVariable character() identifies column in data containing variable to be used for y-axis
+#' @param yVariableLower character(), optional, identifies column in data containing lower limits for error bars
 #' @param yVariableUpper character(), optional,  identifies column in data containing upper limits for error bars
-#' @param yVaraiableLower character(), optional, identifies column in data containing lower limits for error bars
 #' @param ylab character(), optional, label for y-axis, if not provided 'yVariable' will be used.
 #' @param ymin numeric(), optional, lower bounds of y axis, if not NULL y axis will be adopted to data for each column
 #' @param ymax numeric(), optional, upper bounds of y axis, if not provided y axis will be adopted to data for each column
 #' @param xlim vector, optional, lower and upper bounds of x axis, if not provided y axis will be adapted to data for each row
 #' @param basetheme ggplot2 - theme function to use for plotting. Default adjusts y-axis label alignments to account for variable width of tick-labels.
-stackedPanels <- function(data, columnGroups, rowGroups, xVariable, yVariable, yVariableUpper=NULL, yVaraiableLower=NULL, ylab=NULL, xlim=NULL, ymin=0, ymax=NULL, basetheme=function(x){ggplot2::theme_bw() + theme(plot.title = element_text(hjust = 0.5), axis.text.y = element_text(angle = 90, hjust = 1))}){
+stackedPanels <- function(data, columnGroups, rowGroups, xVariable, yVariable, yVariableLower=NULL, yVariableUpper=NULL, ylab=NULL, xlim=NULL, ymin=0, ymax=NULL, basetheme=function(x){ggplot2::theme_bw() + theme(plot.title = element_text(hjust = 0.5), axis.text.y = element_text(angle = 90, hjust = 1))}){
   
   if (!all(c(columnGroups, rowGroups, xVariable, yVariable) %in% names(data))){
     stop("Some arguments (columnGroups, rowGroups, xVariable, yVariable) not found in data.")
@@ -54,8 +54,8 @@ stackedPanels <- function(data, columnGroups, rowGroups, xVariable, yVariable, y
     stop("NAs in grouping variables or x variable")
   }
 
-  if (is.null(yVariableUpper) + is.null(yVaraiableLower) == 1){
-    stop("Provide either both yVariableUpper and yVaraiableLower, or neither of them")
+  if (is.null(yVariableUpper) + is.null(yVariableLower) == 1){
+    stop("Provide either both yVariableUpper and yVariableLower, or neither of them")
   }
   
   if (is.null(ylab)){
@@ -68,14 +68,24 @@ stackedPanels <- function(data, columnGroups, rowGroups, xVariable, yVariable, y
   panels <- list()
   for (row in rows){
     
+    #determine ylims if necessary
+    minvar <- yVariable
+    if (!is.null(yVariableLower)){
+      minvar <- yVariableLower  
+    }
     miny <- ymin
     if (is.null(miny)){
-      miny <- min(data[data[,rowGroups] == row,yVariable])
+      miny <- min(data[data[,rowGroups] == row,minvar])
       miny <- miny - abs(miny) * .1
+    }
+    
+    maxvar <- yVariable
+    if (!is.null(yVariableUpper)){
+      maxvar <- yVariableUpper  
     }
     maxy <- ymax
     if (is.null(maxy)){
-      maxy <- max(data[data[,rowGroups] == row,yVariable])
+      maxy <- max(data[data[,rowGroups] == row,maxvar])
       maxy <- maxy + abs(maxy) * .1
       
     }
@@ -93,7 +103,7 @@ stackedPanels <- function(data, columnGroups, rowGroups, xVariable, yVariable, y
       }
       
       plotdata <- data[data[,columnGroups] == col & data[,rowGroups] == row,]
-      panel <- panelPlot(plotdata, columnGroups, rowGroups, xVariable, yVariable, yVariableUpper, yVaraiableLower, xlimrow, ylimcol, showX=(row == rows[length(rows)]), showY=(col == cols[1]), ylabel=row, basetheme=basetheme, title=title)
+      panel <- panelPlot(plotdata, columnGroups, rowGroups, xVariable, yVariable, yVariableUpper, yVariableLower, xlimrow, ylimcol, showX=(row == rows[length(rows)]), showY=(col == cols[1]), ylabel=row, basetheme=basetheme, title=title)
       panels[[paste(row, col, sep="/")]] <- panel
       
     }
@@ -107,7 +117,11 @@ stackedPanels <- function(data, columnGroups, rowGroups, xVariable, yVariable, y
     
 }
 
-warning("Add error bars")
+#d <- read.csv("data/Catch-rates-countries.csv", sep=";")
+#stackedPanels(d, "Quarter", "Country", "Year", "Catch_rate", ylab = "Catch rate")
 
-d <- read.csv("data/Catch-rates-countries.csv", sep=";")
-stackedPanels(d, "Quarter", "Country", "Year", "Catch_rate", ylab = "Catch rate")
+#fake some error bars for testing plot
+d$upper <- d$Catch_rate + runif(nrow(d))*d$Catch_rate
+d$lower <- d$Catch_rate - runif(nrow(d))*d$Catch_rate
+
+stackedPanels(d, "Quarter", "Country", "Year", "Catch_rate", "lower", "upper", ylab = "Catch rate")
