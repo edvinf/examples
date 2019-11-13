@@ -40,11 +40,11 @@ panelPlot  <- function(plotdata, columnGroups, rowGroups, xVariable, yVariable, 
 #' @param yVariableUpper character(), optional,  identifies column in data containing upper limits for error bars
 #' @param yVaraiableLower character(), optional, identifies column in data containing lower limits for error bars
 #' @param ylab character(), optional, label for y-axis, if not provided 'yVariable' will be used.
-#' @param ymin numeric(), optional, lower bounds of y axis, if not provided y axis will be adopted to data for each column
+#' @param ymin numeric(), optional, lower bounds of y axis, if not NULL y axis will be adopted to data for each column
 #' @param ymax numeric(), optional, upper bounds of y axis, if not provided y axis will be adopted to data for each column
 #' @param xlim vector, optional, lower and upper bounds of x axis, if not provided y axis will be adapted to data for each row
-#' @param basetheme ggplot2 - theme function to use for plotting
-stackedPanels <- function(data, columnGroups, rowGroups, xVariable, yVariable, yVariableUpper=NULL, yVaraiableLower=NULL, ylab=NULL, xlim=NULL, ymin=NULL, ymax=NULL, basetheme=function(x){ggplot2::theme_bw() + theme(plot.title = element_text(hjust = 0.5), axis.text.y = element_text(angle = 90, hjust = 1))}){
+#' @param basetheme ggplot2 - theme function to use for plotting. Default adjusts y-axis label alignments to account for variable width of tick-labels.
+stackedPanels <- function(data, columnGroups, rowGroups, xVariable, yVariable, yVariableUpper=NULL, yVaraiableLower=NULL, ylab=NULL, xlim=NULL, ymin=0, ymax=NULL, basetheme=function(x){ggplot2::theme_bw() + theme(plot.title = element_text(hjust = 0.5), axis.text.y = element_text(angle = 90, hjust = 1))}){
   
   if (!all(c(columnGroups, rowGroups, xVariable, yVariable) %in% names(data))){
     stop("Some arguments (columnGroups, rowGroups, xVariable, yVariable) not found in data.")
@@ -110,4 +110,4 @@ stackedPanels <- function(data, columnGroups, rowGroups, xVariable, yVariable, y
 warning("Add error bars")
 
 d <- read.csv("data/Catch-rates-countries.csv", sep=";")
-stackedPanels(d, "Quarter", "Country", "Year", "Catch_rate", ymin=0, ylab = "Catch rate")
+stackedPanels(d, "Quarter", "Country", "Year", "Catch_rate", ylab = "Catch rate")
