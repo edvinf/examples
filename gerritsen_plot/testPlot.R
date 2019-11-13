@@ -20,3 +20,6 @@ stackedPanels(d, "Quarter", "Country", "Year", "Catch_rate", "lower", "upper", y
 
 # try with set tickmarks
 stackedPanels(d, "Quarter", "Country", "Year", "Catch_rate", "lower", "upper", ylab = "Catch rate", tickmarks = c(0,20,25,40))
+
+# try changing base theme
+stackedPanels(d, "Quarter", "Country", "Year", "Catch_rate", "lower", "upper", ylab = "Catch rate", ymax = 40, basetheme = theme_light)
