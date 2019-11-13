@@ -1,6 +1,10 @@
 source("gerritsenPlot.R")
 
 d <- read.csv("data/Catch-rates-countries.csv", sep=";")
+
+stackedPanels(d, "Quarter", "Country", "Year", "Catch_rate")
+
+#specify y-axis label
 stackedPanels(d, "Quarter", "Country", "Year", "Catch_rate", ylab = "Catch rate")
 
 #fake some error bars for testing plot
@@ -15,11 +19,14 @@ linecols[["Q1"]] <- "green"
 linecols[["Q3"]] <- "pink"
 stackedPanels(d, "Quarter", "Country", "Year", "Catch_rate", "lower", "upper", ylab = "Catch rate", linecol = linecols)
 
-# try with fixed y axis
+# with fixed y axis
 stackedPanels(d, "Quarter", "Country", "Year", "Catch_rate", "lower", "upper", ylab = "Catch rate", ymax = 40)
 
-# try with set tickmarks
+# with set tickmarks
 stackedPanels(d, "Quarter", "Country", "Year", "Catch_rate", "lower", "upper", ylab = "Catch rate", tickmarks = c(1,10,20,25,40))
 
-# try changing base theme
+# changing base theme
 stackedPanels(d, "Quarter", "Country", "Year", "Catch_rate", "lower", "upper", ylab = "Catch rate", ymax = 40, basetheme = theme_light)
+
+# notice ugly behaviour when y-axis labels are horisontal and y-axis is variable
+stackedPanels(d, "Quarter", "Country", "Year", "Catch_rate", "lower", "upper", ylab = "Catch rate", basetheme = theme_light)
