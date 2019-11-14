@@ -7,6 +7,9 @@ stackedPanels(d, "Quarter", "Country", "Year", "Catch_rate")
 #specify y-axis label
 stackedPanels(d, "Quarter", "Country", "Year", "Catch_rate", ylab = "Catch rate")
 
+# switch columns and rows
+stackedPanels(d, "Country", "Quarter", "Year", "Catch_rate", ylab = "Catch rate")
+
 #fake some error bars for testing plot
 d$upper <- d$Catch_rate + runif(nrow(d))*d$Catch_rate
 d$lower <- d$Catch_rate - runif(nrow(d))*d$Catch_rate
