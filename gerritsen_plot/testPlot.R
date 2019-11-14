@@ -20,7 +20,7 @@ stackedPanels(d, "Quarter", "Country", "Year", "Catch_rate", "lower", "upper", y
 linecols <- list()
 linecols[["Q1"]] <- "green"
 linecols[["Q3"]] <- "pink"
-stackedPanels(d, "Quarter", "Country", "Year", "Catch_rate", "lower", "upper", ylab = "Catch rate", linecol = linecols)
+stackedPanels(d, "Quarter", "Country", "Year", "Catch_rate", "lower", "upper", ylab = "Catch rate", linecol = "black", pointcol = "black", errorcol = "black")
 
 # with fixed y axis
 stackedPanels(d, "Quarter", "Country", "Year", "Catch_rate", "lower", "upper", ylab = "Catch rate", ymax = 40)
@@ -33,3 +33,7 @@ stackedPanels(d, "Quarter", "Country", "Year", "Catch_rate", "lower", "upper", y
 
 # notice ugly behaviour when y-axis labels are horisontal and y-axis is variable
 stackedPanels(d, "Quarter", "Country", "Year", "Catch_rate", "lower", "upper", ylab = "Catch rate", basetheme = theme_light)
+
+#change font size labels
+themefunction <- function(x){ggplot2::theme_classic() + theme(plot.title = element_text(hjust = 0.5), axis.text.y = element_text(angle = 90, hjust = 1, size =7))}
+stackedPanels(d, "Quarter", "Country", "Year", "Catch_rate", "lower", "upper", ylab = "Catch rate", linecol = "black", pointcol = "black", errorcol = "black", basetheme=themefunction)
