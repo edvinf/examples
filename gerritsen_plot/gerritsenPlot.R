@@ -1,8 +1,11 @@
+#
+# Example of tabulated plot inspired by Gerritsen et al. 2006
+#
+
 library(ggplot2)
 library(grid)
 library(gridExtra)
 library(egg)
-library(stringr)
 
 #' @noRd
 makeColorMap <- function(columns, color){
