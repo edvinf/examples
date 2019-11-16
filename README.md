@@ -4,6 +4,8 @@ Various analysis examples
 Directory | Description | Language
 ------------ | ------------- | ---
 annotate_area | Add column with area codes based on columns specifying positions, and shapefiles | R
+cruise_series_extraction | Extract cruise series via IMR APIs using RstoX | R
+fetch_biotic | Fetching data through NMD APIs | R
 gerritsen_plot | Generic functions for making plots with common axes in a tabular layout | R ggplot2
 landings | Example of parsing and filtering sales notes data from LSS format | R
 landings_api | Example commands for fetching sales notes data throught the landings - API at IMR | wget curl
