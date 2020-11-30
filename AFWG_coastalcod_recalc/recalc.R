@@ -111,24 +111,20 @@ filterCoastalAreas <- function(landings, mainareas=c("00","03","04","05","06","0
   return(landings)
 }
 
-table2.1b <- function(landings){
-  lc2018 <- filterCoastalAreas(landings[landings$year==2018,])
-  lc2018$mainarea[lc2018$mainarea %in% c("06", "07")] <- "06/07"
-  lc2018$gearGroup <- NA
-  lc2018$gearGroup[lc2018$gear %in% c("50","51","52","58","59")] <- "Trawl"
-  lc2018$gearGroup[lc2018$gear %in% c("30","31","32","33","34","35")] <- "L.Line/Jig"
-  lc2018$gearGroup[lc2018$gear %in% c("61")] <- "D.Seine"
-  lc2018$gearGroup[lc2018$gear %in% c("20","22")] <- "Gillnet"
-  lc2018$gearGroup[is.na(lc2018$gearGroup)] <- "Others"
-  return(aggregate(list(ton=lc2018$liveWeightKg), by=list(mainarea=lc2018$mainarea, gear=lc2018$gearGroup), FUN=function(x){sum(x)/1000}))
+# load AFWG summary tables for coastal cod totals
+loadCoastalCodAreaTables <- function(xl="tables/kysttorskuttak.xlsx"){
+  tab <- xlsx::read.xlsx(xl, sheetName = "fangst_område", header = T, colClasses = c("numeric"))
+  tab$total <- NULL
+  tab$total.tab.2.1.a <- NULL
+  tab$rel.diff <- NULL
+  tab$fN67 <- rowSums(tab[,c("ho03", "ho04", "ho00", "ho05")])
+  tab$fr.fN67 <- tab$fN67 / (tab$fN67 + tab$ho06_07)
+  tab$fr.ho06_07 <- 1 - tab$fr.fN67
+  
+  return(tab[,c("year", "fr.fN67", "fr.ho06_07", "fN67", "ho06_07")])
 }
 
-table2.1bTotals <- function(landings){
-  lc2018 <- filterCoastalAreas(landings[landings$year==2018,])
-  lc2018$mainarea[lc2018$mainarea %in% c("06", "07")] <- "06/07"
-  return(aggregate(list(ton=lc2018$liveWeightKg), by=list(mainarea=lc2018$mainarea), FUN=function(x){sum(x)/1000}))
-}
-
+#' make key from all cod landings
 makeKey <- function(landings, areaDef=list(fN67=c("00","05","04","03"), h06=c("06"), h07=c("07"))){
   landings$mgmtArea <- NA
   for (n in names(areaDef)){
@@ -140,21 +136,20 @@ makeKey <- function(landings, areaDef=list(fN67=c("00","05","04","03"), h06=c("0
   return(merge(key, yearTotal))
 }
 
-redistrCaa <- function(oldTable="tables/tab2.1a.xlsx", landings="tables/allYears.rds"){
-  landings <- filterCoastalAreas(loadCod()$data)
-  key <- makeKey(landings)
+redistrCaa <- function(oldTable="tables/tab2.1a.xlsx", coastalCodAreaTables=loadCoastalCodAreaTables()){
+  
   coastalCaa <- loadTab2.1a(oldTable)
   
   # merge inn redistribution parameters
-  stopifnot(all(coastalCaa$managementArea %in% c("h06", "h07", "fN67")))
-  coastalCaa <- merge(coastalCaa, key, by="year")
-  coastalCaa[,2:10] <- coastalCaa[,2:10]
+  coastalCaa <- merge(coastalCaa, coastalCodAreaTables[,c("year", "fr.fN67", "fr.ho06_07")], by="year")
   
   #set revised weights to total from sales notes
   
+  #set for area 
   revisedCAA <- coastalCaa
-  revisedCAA$landedCoastalMgtArea <- round(revisedCAA$landedCoastalTotal*revisedCAA$landedAllCodMgtArea / revisedCAA$landedAllCodTotal)
-  revisedCAA[,2:10] <- round(revisedCAA[,2:10] * revisedCAA$landedAllCodMgtArea / revisedCAA$landedAllCodTotal)
+  revisedCAA$managementArea <- "fN67"
+  revisedCAA$landedCoastalMgtArea <- round(revisedCAA$landedCoastalTotal*revisedCAA$fr.fN67)
+  revisedCAA[,2:10] <- round(revisedCAA[,2:10] * revisedCAA$landedCoastalTotal*revisedCAA$fr.fN67)
   revisedCAA$unitAgeGroups <- "(’000)"
   revisedCAA$unitWeights <- "Tonnes"
   return(revisedCAA)
@@ -176,5 +171,10 @@ run <- function(){
   warning("2019 uses revision of data from nov 2020. Other years are considered at final revision.")
   saveRedestibuted(redistrCaa())
 }
+
+stop("Check tabeller")
+stop("Del 06 og 07 på total tosk innfor 12 m")
+stop("Finn 2018 og 2019 fra ECA")
+
 
 run()
